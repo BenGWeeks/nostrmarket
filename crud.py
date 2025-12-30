@@ -95,12 +95,46 @@ async def get_merchants_ids_with_pubkeys() -> list[tuple[str, str]]:
 
 
 async def get_merchant_for_user(user_id: str) -> Merchant | None:
+    # First try to get the selected merchant
     row: dict = await db.fetchone(
-        """SELECT * FROM nostrmarket.merchants WHERE user_id = :user_id """,
+        """SELECT * FROM nostrmarket.merchants
+           WHERE user_id = :user_id AND selected = true""",
+        {"user_id": user_id},
+    )
+    # If no selected merchant, get the most recently touched one
+    if not row:
+        row = await db.fetchone(
+            """SELECT * FROM nostrmarket.merchants WHERE user_id = :user_id
+               ORDER BY time DESC""",
+            {"user_id": user_id},
+        )
+
+    return Merchant.from_row(row) if row else None
+
+
+async def get_merchants_for_user(user_id: str) -> list[Merchant]:
+    rows: list[dict] = await db.fetchall(
+        """SELECT * FROM nostrmarket.merchants WHERE user_id = :user_id
+           ORDER BY selected DESC, time DESC""",
         {"user_id": user_id},
     )
 
-    return Merchant.from_row(row) if row else None
+    return [Merchant.from_row(row) for row in rows]
+
+
+async def set_merchant_selected(user_id: str, merchant_id: str) -> None:
+    # First, deselect all merchants for this user
+    await db.execute(
+        """UPDATE nostrmarket.merchants SET selected = false
+           WHERE user_id = :user_id""",
+        {"user_id": user_id},
+    )
+    # Then select the specified merchant
+    await db.execute(
+        """UPDATE nostrmarket.merchants SET selected = true
+           WHERE user_id = :user_id AND id = :merchant_id""",
+        {"user_id": user_id, "merchant_id": merchant_id},
+    )
 
 
 async def delete_merchant(merchant_id: str) -> None:

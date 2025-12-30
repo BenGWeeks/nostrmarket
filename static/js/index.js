@@ -8,6 +8,7 @@ window.app = Vue.createApp({
       activeTab: 'orders',
       selectedStallFilter: null,
       merchant: {},
+      merchants: [],
       shippingZones: [],
       activeChatCustomer: '',
       orderPubkey: null,
@@ -158,6 +159,7 @@ window.app = Vue.createApp({
           payload
         )
         this.merchant = data
+        await this.getMerchants()
         this.$q.notify({
           type: 'positive',
           message: 'Merchant Created!'
@@ -176,6 +178,37 @@ window.app = Vue.createApp({
         )
         this.merchant = data
         return data
+      } catch (error) {
+        LNbits.utils.notifyApiError(error)
+      }
+    },
+    getMerchants: async function () {
+      try {
+        const {data} = await LNbits.api.request(
+          'GET',
+          '/nostrmarket/api/v1/merchants',
+          this.g.user.wallets[0].inkey
+        )
+        this.merchants = data || []
+        return data
+      } catch (error) {
+        LNbits.utils.notifyApiError(error)
+      }
+    },
+    switchMerchant: async function (merchantId) {
+      try {
+        const {data} = await LNbits.api.request(
+          'PUT',
+          `/nostrmarket/api/v1/merchant/${merchantId}/switch`,
+          this.g.user.wallets[0].adminkey
+        )
+        this.merchant = data
+        await this.getMerchants()
+        this.waitForNotifications()
+        this.$q.notify({
+          type: 'positive',
+          message: 'Switched merchant profile'
+        })
       } catch (error) {
         LNbits.utils.notifyApiError(error)
       }
@@ -410,6 +443,7 @@ window.app = Vue.createApp({
   },
   created: async function () {
     await this.getMerchant()
+    await this.getMerchants()
     await this.checkNostrStatus()
     setInterval(async () => {
       if (

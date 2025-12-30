@@ -189,3 +189,12 @@ async def m005_update_product_activation(db):
         ADD COLUMN active BOOLEAN NOT NULL DEFAULT true;
         """
     )
+
+
+async def m006_add_merchant_selected_flag(db):
+    await db.execute(
+        """
+        ALTER TABLE nostrmarket.merchants
+        ADD COLUMN selected BOOLEAN NOT NULL DEFAULT false;
+        """
+    )

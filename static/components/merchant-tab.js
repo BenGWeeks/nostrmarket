@@ -11,7 +11,8 @@ window.app.component('merchant-tab', {
     'public-key',
     'private-key',
     'is-admin',
-    'merchant-config'
+    'merchant-config',
+    'merchants'
   ],
   emits: [
     'toggle-show-keys',
@@ -21,7 +22,8 @@ window.app.component('merchant-tab', {
     'restart-nostr-connection',
     'profile-updated',
     'import-key',
-    'generate-key'
+    'generate-key',
+    'switch-merchant'
   ],
   data: function () {
     return {
@@ -93,6 +95,14 @@ window.app.component('merchant-tab', {
     },
     handleImageError: function (e) {
       e.target.style.display = 'none'
+    },
+    switchMerchant: function (merchantId) {
+      this.$emit('switch-merchant', merchantId)
+    },
+    getMerchantDisplayName: function (merchant) {
+      if (merchant.config?.display_name) return merchant.config.display_name
+      if (merchant.config?.name) return merchant.config.name
+      return merchant.public_key?.slice(0, 8) + '...'
     }
   }
 })
