@@ -98,6 +98,24 @@ Three permanent async tasks:
 - NIP-04 encryption/decryption
 - Key derivation and bech32 encoding (npub/nsec)
 
+## Testing with LNbits
+
+To test the extension locally with LNbits:
+
+```bash
+# Create symlink in LNbits extensions directory (if not already done)
+mkdir -p /path/to/lnbits/lnbits/extensions
+ln -sf /path/to/nostrmarket /path/to/lnbits/lnbits/extensions/nostrmarket
+
+# Start LNbits (from lnbits directory, keep terminal open)
+cd /path/to/lnbits
+uv run lnbits --port 5001
+```
+
+Access at http://localhost:5001 and enable the extension in Admin > Extensions.
+
+Note: The nostrclient extension must also be installed and configured for full functionality.
+
 ## Workflow
 
 - Always check GitHub Actions after pushing to verify CI passes

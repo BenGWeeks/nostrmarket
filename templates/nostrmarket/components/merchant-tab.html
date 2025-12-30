@@ -1,6 +1,6 @@
 <div>
   <div class="row q-col-gutter-md">
-    <div class="col-12 col-md-8">
+    <div class="col-12">
       <q-card v-if="publicKey" flat bordered>
         <q-card-section>
           <div class="row items-center no-wrap q-mb-md">
@@ -33,27 +33,34 @@
             >
               <q-list>
                 <q-item-label header>Saved Profiles</q-item-label>
-                <q-item>
+                <q-item
+                  v-for="m in merchants"
+                  :key="m.id"
+                  clickable
+                  v-close-popup
+                  @click="m.id !== merchantId && switchMerchant(m.id)"
+                >
                   <q-item-section avatar>
-                    <q-icon name="check" color="primary"></q-icon>
+                    <q-icon
+                      :name="m.id === merchantId ? 'check' : 'person'"
+                      :color="m.id === merchantId ? 'primary' : 'grey'"
+                    ></q-icon>
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label
-                      ><span
-                        v-text="merchantConfig?.display_name || merchantConfig?.name || 'Current Profile'"
-                      ></span
-                    ></q-item-label>
+                    <q-item-label>
+                      <span v-text="getMerchantDisplayName(m)"></span>
+                    </q-item-label>
                     <q-item-label
                       caption
                       class="text-mono"
                       style="font-size: 10px"
                     >
                       <span
-                        v-text="publicKey ? publicKey.slice(0, 16) + '...' : ''"
+                        v-text="m.public_key ? m.public_key.slice(0, 16) + '...' : ''"
                       ></span>
                     </q-item-label>
                   </q-item-section>
-                  <q-item-section side>
+                  <q-item-section side v-if="m.id === merchantId">
                     <q-btn
                       flat
                       dense

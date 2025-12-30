@@ -36,6 +36,8 @@ from .crud import (
     get_last_direct_messages_time,
     get_merchant_by_pubkey,
     get_merchant_for_user,
+    get_merchants_for_user,
+    set_merchant_selected,
     get_order,
     get_order_by_event_id,
     get_orders,
@@ -100,6 +102,10 @@ async def api_create_merchant(
 
         merchant = await create_merchant(wallet.wallet.user, data)
 
+        # Select the newly created merchant
+        await set_merchant_selected(wallet.wallet.user, merchant.id)
+        merchant.selected = True
+
         await create_zone(
             merchant.id,
             Zone(
@@ -151,6 +157,52 @@ async def api_get_merchant(
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Cannot get merchant",
+        ) from ex
+
+
+@nostrmarket_ext.get("/api/v1/merchants")
+async def api_get_merchants(
+    wallet: WalletTypeInfo = Depends(require_invoice_key),
+) -> list[Merchant]:
+
+    try:
+        merchants = await get_merchants_for_user(wallet.wallet.user)
+        return merchants
+    except Exception as ex:
+        logger.warning(ex)
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Cannot get merchants",
+        ) from ex
+
+
+@nostrmarket_ext.put("/api/v1/merchant/{merchant_id}/switch")
+async def api_switch_merchant(
+    merchant_id: str,
+    wallet: WalletTypeInfo = Depends(require_admin_key),
+) -> Merchant:
+    try:
+        merchants = await get_merchants_for_user(wallet.wallet.user)
+        merchant_ids = [m.id for m in merchants]
+        assert merchant_id in merchant_ids, "Merchant not found for this user"
+
+        await set_merchant_selected(wallet.wallet.user, merchant_id)
+        merchant = await touch_merchant(wallet.wallet.user, merchant_id)
+        assert merchant, "Merchant cannot be found"
+
+        await resubscribe_to_all_merchants()
+
+        return merchant
+    except AssertionError as ex:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=str(ex),
+        ) from ex
+    except Exception as ex:
+        logger.warning(ex)
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Cannot switch merchant",
         ) from ex
 
 

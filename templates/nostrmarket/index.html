@@ -77,6 +77,7 @@
               :private-key="merchant.private_key"
               :is-admin="g.user.admin"
               :merchant-config="merchant.config"
+              :merchants="merchants"
               @toggle-show-keys="toggleShowKeys"
               @hide-keys="showKeys = false"
               @merchant-deleted="handleMerchantDeleted"
@@ -85,6 +86,7 @@
               @import-key="showImportKeysDialog"
               @generate-key="generateKeys"
               @profile-updated="getMerchant"
+              @switch-merchant="switchMerchant"
             ></merchant-tab>
           </q-tab-panel>
 

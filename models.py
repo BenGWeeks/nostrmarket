@@ -58,6 +58,7 @@ class PartialMerchant(BaseModel):
 class Merchant(PartialMerchant, Nostrable):
     id: str
     time: int | None = 0
+    selected: bool = False
 
     def sign_hash(self, hash_: bytes) -> str:
         return sign_message_hash(self.private_key, hash_)
